@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Scene 1: Physics Lab Refraction Analysis</title>
+    <!-- Tailwind CSS for an immersive dark HUD theme -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .laser-glow {
+            filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8));
+        }
+        .success-glow {
+            filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.9));
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-red-500 selection:text-white">
+
+    <!-- Crime Scene Banner -->
+    <header class="bg-red-950/40 border-b border-red-900/60 py-4 text-center px-4">
+        <div class="inline-block bg-red-600 text-slate-950 font-mono text-[10px] font-bold px-3 py-0.5 rounded uppercase tracking-widest mb-1 animate-pulse">
+            CRIME SCENE - DO NOT CROSS
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-red-200">PHYSICS LAB: Glass Shard Spectrometry</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-lg p-4 flex-grow flex flex-col justify-center">
+        
+        <!-- Scenario Introduction -->
+        <div class="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl mb-4 shadow-xl">
+            <h2 class="text-sm font-bold text-red-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span>📁</span> Case File Node #01
+            </h2>
+            <p class="text-xs text-slate-300 leading-relaxed font-mono">
+                A suspect broke through the glass window to access the laboratory compound. We recovered microscopic glass shards from their jacket. 
+                <br><br>
+                <span class="text-yellow-400">Your Objective:</span> Calibrate the laser refraction index testing device below. Adjust the angle of the incident beam so the refracted beam hits the photo-sensor targets. This will verify if the glass matches the scene of the crime!
+            </p>
+        </div>
+
+        <!-- Interactive Laser Simulation Device -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+            
+            <!-- Sensor Status Badge -->
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-mono tracking-wider text-slate-500 uppercase">Refractive Index Scanner (RI-800)</span>
+                <span id="sensor-status" class="bg-red-500/10 text-red-400 text-[10px] font-mono px-2 py-1 rounded border border-red-500/20 uppercase tracking-widest">
+                    Beam Misaligned
+                </span>
+            </div>
+
+            <!-- SVG Simulator Screen -->
+            <div class="bg-slate-950 rounded-xl border border-slate-800 p-2 relative">
+                <svg id="refraction-canvas" viewBox="0 0 400 220" class="w-full h-auto bg-slate-950 rounded-lg">
+                    <!-- Grid Lines for scientific aesthetic -->
+                    <defs>
+                        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(51, 65, 85, 0.15)" stroke-width="1"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+
+                    <!-- Ambient Light/Atmospheric lines -->
+                    <line x1="200" y1="0" x2="200" y2="220" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4" />
+
+                    <!-- Targets/Sensors (Goal Point) -->
+                    <!-- Correct emergent y will be around 140 -->
+                    <circle cx="360" cy="140" r="10" fill="transparent" stroke="#10b981" stroke-width="2" class="animate-pulse" />
+                    <circle cx="360" cy="140" r="4" fill="#10b981" />
+                    <text x="360" y="122" fill="#10b981" font-size="8" font-family="monospace" text-anchor="middle" class="font-bold">SENSOR</text>
+
+                    <!-- Glass Medium (Refractive Index = 1.5) -->
+                    <rect x="150" y="30" width="100" height="160" fill="rgba(56, 189, 248, 0.15)" stroke="rgba(56, 189, 248, 0.4)" stroke-width="2" />
+                    <text x="200" y="45" fill="rgba(56, 189, 248, 0.6)" font-size="8" font-family="monospace" text-anchor="middle">CRIME GLASS (n = 1.52)</text>
+
+                    <!-- Laser Source Device graphic -->
+                    <rect x="10" y="90" width="30" height="20" rx="3" fill="#334155" />
+                    <rect x="40" y="96" width="8" height="8" fill="#ef4444" />
+                    <text x="25" y="112" fill="#94a3b8" font-size="7" font-family="monospace" text-anchor="middle">TX-1</text>
+
+                    <!-- Light Paths (Rendered dynamically via Javascript) -->
+                    <polyline id="laser-beam" points="" fill="none" stroke="#ef4444" stroke-width="2.5" class="laser-glow" />
+                </svg>
+            </div>
+
+            <!-- Control Console Sliders -->
+            <div class="mt-5 space-y-4">
+                <div>
+                    <div class="flex justify-between text-xs font-mono text-slate-400 mb-1">
+                        <span>Incident Angle (&theta;₁):</span>
+                        <span id="angle-val" class="text-red-400 font-bold">0.0°</span>
+                    </div>
+                    <input id="angle-slider" type="range" min="-45" max="45" step="0.5" value="-20" class="w-full accent-red-500 bg-slate-800 h-2 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Evidence Decryption Drawer (Revealed on solve) -->
+            <div id="decryption-drawer" class="mt-6 bg-emerald-950/20 border border-emerald-900/30 rounded-xl p-4 text-center hidden">
+                <span class="text-2xl">🔓</span>
+                <h3 class="text-md font-bold text-emerald-400 mt-2">Analysis Complete!</h3>
+                <p class="text-[11px] font-mono text-slate-400 mt-1">
+                    The refractive index matches the suspect's biological profiles perfectly.
+                </p>
+                <div class="bg-slate-950/80 rounded border border-emerald-500/20 py-2.5 px-4 my-3 font-mono">
+                    <span class="text-xs text-slate-500 block">SECRET EVIDENCE PASSCODE:</span>
+                    <span class="text-xl font-black text-emerald-400 tracking-widest">GLASS</span>
+                </div>
+                
+                <!-- Dynamic Redirect link back to index.html with validation -->
+                <button id="upload-evidence-btn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-lg text-xs tracking-wider uppercase transition">
+                    Upload Specimen to Main Case File &rarr;
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-[9px] tracking-widest text-slate-600 font-mono">
+        SYSTEM: DECENTRALIZED PHYSICAL VALIDATION UNIT
+    </footer>
+
+    <script>
+        const angleSlider = document.getElementById('angle-slider');
+        const angleVal = document.getElementById('angle-val');
+        const laserBeam = document.getElementById('laser-beam');
+        const sensorStatus = document.getElementById('sensor-status');
+        const decryptionDrawer = document.getElementById('decryption-drawer');
+        const uploadEvidenceBtn = document.getElementById('upload-evidence-btn');
+
+        // Physics Constants
+        const glassXStart = 150;
+        const glassXEnd = 250;
+        const laserSourceX = 48;
+        const laserSourceY = 100;
+        
+        const nAir = 1.0;
+        const nGlass = 1.52; // Target refractive index
+
+        function updatePhysicsSimulation() {
+            const degrees = parseFloat(angleSlider.value);
+            angleVal.textContent = `${degrees.toFixed(1)}°`;
+
+            // Convert to Radians
+            const theta1 = (degrees * Math.PI) / 180;
+
+            // Step 1: Draw path from source (48, 100) to glass boundary (x = 150)
+            // Use basic trigonometry to find intersection point at x = 150
+            const deltaX1 = glassXStart - laserSourceX;
+            const incidentY = laserSourceY + (deltaX1 * Math.tan(theta1));
+
+            // Step 2: Compute refracted angle inside the glass block using Snell's Law
+            // n1 * sin(theta1) = n2 * sin(theta2)
+            const sinTheta2 = (nAir * Math.sin(theta1)) / nGlass;
+            const theta2 = Math.asin(sinTheta2);
+
+            // Path through glass block (x = 150 to x = 250)
+            const deltaX2 = glassXEnd - glassXStart;
+            const emergentY = incidentY + (deltaX2 * Math.tan(theta2));
+
+            // Step 3: Refract back out into the air (n3 = 1.0)
+            // Angle of emergence equals angle of incidence for parallel boundaries
+            const emergentX = glassXEnd;
+            const finalX = 380;
+            const deltaX3 = finalX - emergentX;
+            const finalY = emergentY + (deltaX3 * Math.tan(theta1));
+
+            // Set coordinates for SVG path string
+            const pointsString = `${laserSourceX},${laserSourceY} ${glassXStart},${incidentY} ${glassXEnd},${emergentY} ${finalX},${finalY}`;
+            laserBeam.setAttribute('points', pointsString);
+
+            // Check if emergent beam aligns with photo-sensor center (Target Y = 140)
+            // Allow a small margin of error (2px tolerance) for educational playability
+            const targetY = 140;
+            const beamAtSensorLine = emergentY + ((360 - glassXEnd) * Math.tan(theta1));
+
+            if (Math.abs(beamAtSensorLine - targetY) < 3.5) {
+                // SUCCESS MATCH
+                sensorStatus.textContent = "MATCH VERIFIED";
+                sensorStatus.className = "bg-emerald-500/10 text-emerald-400 text-[10px] font-mono px-2 py-1 rounded border border-emerald-500/20 uppercase tracking-widest";
+                laserBeam.setAttribute('stroke', '#10b981');
+                laserBeam.setAttribute('class', 'success-glow');
+                decryptionDrawer.classList.remove('hidden');
+            } else {
+                // RESET NO MATCH
+                sensorStatus.textContent = "Beam Misaligned";
+                sensorStatus.className = "bg-red-500/10 text-red-400 text-[10px] font-mono px-2 py-1 rounded border border-red-500/20 uppercase tracking-widest";
+                laserBeam.setAttribute('stroke', '#ef4444');
+                laserBeam.setAttribute('class', 'laser-glow');
+                decryptionDrawer.classList.add('hidden');
+            }
+        }
+
+        // Listener for real-time slider changes
+        angleSlider.addEventListener('input', updatePhysicsSimulation);
+
+        // Redirect action to return students back to core dashboard
+        uploadEvidenceBtn.addEventListener('click', () => {
+            // Re-navigates to index.html within the same hosting directory, automatically checking-in the Physics Lab node
+            window.location.href = "index.html?scan=physics_lab";
+        });
+
+        // Initialize frame calculations on load
+        window.addEventListener('DOMContentLoaded', updatePhysicsSimulation);
+    </script>
+</body>
+</html>
