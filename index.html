@@ -1,0 +1,516 @@
+:Forensics Workshop Game:index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio-Forensics: Crime Scene Investigator</title>
+    <!-- Tailwind CSS CDN for high-end, responsive dark-mode styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Pulse scanning indicator for that forensic radar look */
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.08); opacity: 0.4; }
+        }
+        .glow-effect::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+            animation: pulse-glow 3s infinite ease-in-out;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- Header Section with Biotech Theme -->
+    <header class="bg-slate-900 border-b border-emerald-900/40 text-center py-6 shadow-2xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 via-cyan-500 to-teal-500"></div>
+        <h1 class="text-3xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+            ☣️ BIO-FORENSICS UNIT
+        </h1>
+        <p class="text-[10px] text-emerald-300 font-mono tracking-[0.2em] uppercase mt-1">Evidence Analysis & Navigation Portal</p>
+    </header>
+
+    <!-- Main Mobile Content Area -->
+    <main class="container mx-auto max-w-md p-4 flex-grow flex flex-col justify-center">
+
+        <!-- VIEW 1: DISPATCH / TEAM SETUP SCREEN -->
+        <div id="setup-view" class="bg-slate-900/80 backdrop-blur p-6 rounded-2xl shadow-2xl border border-slate-800/80 transition-all duration-300">
+            <div class="text-center mb-6">
+                <div class="inline-flex p-3 bg-emerald-500/10 rounded-full text-emerald-400 mb-3 border border-emerald-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Case File Activation</h2>
+                <p class="text-xs text-slate-400 mt-1">Register your investigative team to initialize the evidence collection matrix.</p>
+            </div>
+            
+            <div class="mb-5">
+                <label for="team-select" class="block text-xs font-mono tracking-wider text-emerald-400 mb-2">Assign Team Name:</label>
+                <select id="team-select" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500 text-slate-100 outline-none transition duration-150 font-mono">
+                    <!-- Dropdown options populated dynamically by script -->
+                </select>
+            </div>
+
+            <!-- Mini List showing enabled checkpoints for validation transparency -->
+            <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 mb-6">
+                <h3 class="text-xs font-mono text-slate-400 mb-2 flex justify-between">
+                    <span>Active Lab Zones:</span>
+                    <span id="active-count-badge" class="text-emerald-400 font-bold">0 Active</span>
+                </h3>
+                <div id="active-zones-list" class="text-[11px] text-slate-500 font-mono max-h-24 overflow-y-auto space-y-1">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+            
+            <button id="start-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-bold py-4 px-4 rounded-xl transition duration-200 shadow-lg shadow-emerald-500/10 active:scale-[0.98]">
+                Begin Investigation 🔎
+            </button>
+        </div>
+
+        <!-- VIEW 2: ACTIVE GAME SCREEN -->
+        <div id="game-view" class="bg-slate-900/80 backdrop-blur p-6 rounded-2xl shadow-2xl border border-slate-800/80 hidden transition-all duration-300 relative glow-effect">
+            
+            <!-- Team & Progress Bar Header -->
+            <div class="flex justify-between items-center mb-4 relative z-10">
+                <span id="display-team-name" class="bg-emerald-500/10 text-emerald-300 text-xs font-mono font-bold px-3 py-1.5 rounded-md border border-emerald-500/20">
+                    UNIT: Loading...
+                </span>
+                <span id="display-progress" class="text-xs font-mono font-bold text-cyan-400">
+                    EVIDENCE: 0 / 0
+                </span>
+            </div>
+            
+            <!-- Sleek Tech Progress Bar Graphic -->
+            <div class="w-full bg-slate-950 h-3 rounded-full mb-6 overflow-hidden border border-slate-800/80 relative z-10">
+                <div id="progress-bar" class="bg-gradient-to-r from-emerald-500 to-cyan-500 h-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+
+            <!-- Current Location Clue Indicator -->
+            <div class="mb-4 relative z-10">
+                <span id="display-location-clue" class="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 block mb-1">
+                    TARGET SECTOR TARGETED:
+                </span>
+                <h3 id="display-current-location" class="text-lg font-bold text-white flex items-center gap-1.5">
+                    <span class="inline-block w-2.5 h-2.5 bg-cyan-500 rounded-full animate-ping"></span>
+                    Locating Node...
+                </h3>
+            </div>
+
+            <!-- Main Clue Box -->
+            <div class="bg-slate-950/90 p-5 rounded-xl border border-slate-800 mb-6 relative overflow-hidden z-10">
+                <div class="absolute top-0 right-0 p-2 text-emerald-500/5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h.01M16 20h2a2 2 0 002-2v-5a2 2 0 00-2-2h-2m-9 1H4a2 2 0 00-2 2v5a2 2 0 002 2h2m0-11V7a4 4 0 018 0v4h3" />
+                    </svg>
+                </div>
+                <h3 class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400 mb-2">Clue / Intelligence File:</h3>
+                <p id="clue-text" class="text-sm text-slate-300 leading-relaxed font-sans">
+                    System scanning...
+                </p>
+            </div>
+
+            <!-- Dynamic Alert Feedbacks -->
+            <div id="game-feedback" class="hidden text-sm p-4 rounded-xl mb-6 text-center font-mono font-bold"></div>
+
+            <!-- Submission Area -->
+            <div class="border-t border-slate-800/80 pt-5 mt-2 relative z-10">
+                <p class="text-xs text-slate-400 mb-3 text-center">
+                    Arrived? Scan the location QR code or input the Secret Evidence Key found written on the site placard:
+                </p>
+                <div class="flex gap-2">
+                    <input type="text" id="passcode-input" placeholder="Evidence Key Code..." class="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase tracking-widest text-center text-emerald-300 placeholder-slate-700">
+                    <button id="submit-passcode" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-5 py-3.5 rounded-xl transition duration-150 active:scale-[0.95] text-sm tracking-wide">
+                        ANALYZE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Control panel for easy setup testing -->
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-800/40 relative z-10">
+                <button id="reset-btn" class="text-xs text-slate-600 hover:text-red-400 transition font-mono">
+                    [ ABORT CASE FILE ]
+                </button>
+                <span class="text-[9px] text-slate-600 font-mono">VER: BIO-FOREN-v2</span>
+            </div>
+        </div>
+
+        <!-- VIEW 3: VICTORY / LAB CONCLUSION SCREEN -->
+        <div id="victory-view" class="bg-slate-900/80 backdrop-blur p-8 rounded-2xl shadow-2xl border border-slate-800/80 text-center hidden transition-all duration-300">
+            <div class="relative inline-block mb-4">
+                <div class="text-6xl animate-bounce">🧬</div>
+                <div class="absolute inset-0 bg-emerald-500/20 blur-xl rounded-full"></div>
+            </div>
+            <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400 mb-2">
+                Case Solved!
+            </h2>
+            <p class="text-slate-300 text-sm mb-6 max-w-xs mx-auto">
+                All critical biological specimens and environmental forensics are secured in the primary database. Your team has completed the investigation.
+            </p>
+            <div class="bg-emerald-500/10 text-emerald-400 font-mono text-xs font-bold py-3 px-6 rounded-xl inline-block border border-emerald-500/20 tracking-widest">
+                DIAGNOSIS COMPLETE: REPORT FILED
+            </div>
+
+            <button id="victory-reset-btn" class="block w-full mt-8 text-xs text-slate-600 hover:text-emerald-400 transition font-mono underline">
+                [ START NEW PROFILE ]
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-[9px] tracking-widest text-slate-600 font-mono uppercase border-t border-slate-900">
+        Biological Forensics Division &bull; Lab Coordinator Console
+    </footer>
+
+    <script>
+        // =========================================================================
+        // 🧪 TEACHER CORNER: MANAGE YOUR ACTIVE LOCATIONS & CLUES BELOW
+        // =========================================================================
+        // Set enabled: true to include a location in the game.
+        // Set enabled: false to skip a location completely.
+        const CONFIG = {
+            totalTeams: 10, // Generates "Team 1" through "Team 10" in setup dropdown
+
+            checkpoints: [
+                {
+                    enabled: true,
+                    scanId: "physics_lab",
+                    secretPasscode: "GLASS",
+                    displayName: "Physics Lab",
+                    clue: "We need to analyze the refraction pattern on glass shards found at the scene. Head to the room filled with lasers, dynamics carts, and circuit boards."
+                },
+                {
+                    enabled: true,
+                    scanId: "biology_lab",
+                    secretPasscode: "MITOSIS",
+                    displayName: "Biology Lab",
+                    clue: "A drop of blood needs to be examined under high-powered light microscopes to identify red blood cell morphology. Head to our main biology hub."
+                },
+                {
+                    enabled: true,
+                    scanId: "chemistry_lab",
+                    secretPasscode: "pH7",
+                    displayName: "Chemistry Lab",
+                    clue: "A suspicious white powder was recovered! We need to run a toxicological reagent test to check its chemical pH. Report to the fume hood headquarters!"
+                },
+                {
+                    enabled: true,
+                    scanId: "covered_playground",
+                    secretPasscode: "TREAD",
+                    displayName: "Covered Playground",
+                    clue: "A mud-cast footprint print was spotted near the benches where students gather out of the rain. Retrieve the cast from the covered activity play area!"
+                },
+                {
+                    enabled: true,
+                    scanId: "basketball_court",
+                    secretPasscode: "BOUNCE",
+                    displayName: "Basketball Court",
+                    clue: "Look down closely! Impact spatter patterns on concrete can reveal the height and angle of falling droplets. Examine the floor of the court with hoops."
+                },
+                {
+                    enabled: true,
+                    scanId: "football_pitch",
+                    secretPasscode: "TURF",
+                    displayName: "Football Pitch",
+                    clue: "Grass pollen samples matching the victim's shoes need to be traced to their local source. Venture out onto the green outdoor sports turf field."
+                },
+                {
+                    enabled: true,
+                    scanId: "tuck_shop",
+                    secretPasscode: "LATENT",
+                    displayName: "Tuck Shop",
+                    clue: "The suspect purchased a soda. Dust for latent greasy fingerprint ridges on recycled aluminum cans. Find the vendor stall where snacks are sold."
+                },
+                {
+                    enabled: true,
+                    scanId: "school_hall",
+                    secretPasscode: "FIBRE",
+                    displayName: "School Hall",
+                    clue: "A synthetic nylon carpet fibre was recovered from the stage curtains. Scan the entrance of our massive school assembly room."
+                },
+                {
+                    enabled: true,
+                    scanId: "upper_landing",
+                    secretPasscode: "RAILING",
+                    displayName: "Upper Landing",
+                    clue: "A hair follicle was caught on the stairwell guardrail during an escape. Head to the open lookout zone on the high stair platform."
+                },
+                {
+                    enabled: true,
+                    scanId: "music_room",
+                    secretPasscode: "PITCH",
+                    displayName: "Music Room",
+                    clue: "An audio message was left on an answering machine. Analyze the frequency and decibel output. Find the room holding instruments and musical scores."
+                },
+                {
+                    enabled: true,
+                    scanId: "cal_room",
+                    secretPasscode: "DECRYPT",
+                    displayName: "CAL Room",
+                    clue: "Trace the suspect's computer login details from their digital workstation history. Retrieve the server logs in the Computer Assisted Learning center."
+                },
+                {
+                    enabled: true,
+                    scanId: "library",
+                    secretPasscode: "INK",
+                    displayName: "Library",
+                    clue: "A handwritten threat note was drafted. We must run an ink chromatography analysis on paper stock. Find the quiet space where rows of reference books sit."
+                }
+            ]
+        };
+
+        // Filter out checkpoints disabled by your colleague
+        const activeCheckpoints = CONFIG.checkpoints.filter(cp => cp.enabled);
+
+        // ==========================================
+        // GAME STATE MANAGEMENT ENGINE
+        // ==========================================
+        let gameState = {
+            teamName: "",
+            currentCheckpointIndex: 0,
+            isComplete: false
+        };
+
+        // DOM elements cache
+        const setupView = document.getElementById('setup-view');
+        const gameView = document.getElementById('game-view');
+        const victoryView = document.getElementById('victory-view');
+        
+        const teamSelect = document.getElementById('team-select');
+        const startBtn = document.getElementById('start-btn');
+        const activeCountBadge = document.getElementById('active-count-badge');
+        const activeZonesList = document.getElementById('active-zones-list');
+        
+        const displayTeamName = document.getElementById('display-team-name');
+        const displayProgress = document.getElementById('display-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const displayCurrentLocation = document.getElementById('display-current-location');
+        const clueText = document.getElementById('clue-text');
+        const passcodeInput = document.getElementById('passcode-input');
+        const submitPasscodeBtn = document.getElementById('submit-passcode');
+        const feedbackDiv = document.getElementById('game-feedback');
+        
+        const resetBtn = document.getElementById('reset-btn');
+        const victoryResetBtn = document.getElementById('victory-reset-btn');
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            generateTeamDropdown();
+            renderActiveZonesSummary();
+            loadProgress();
+            checkUrlParameters();
+            renderActiveView();
+        });
+
+        // 1. Generate Team Options
+        function generateTeamDropdown() {
+            teamSelect.innerHTML = "";
+            for(let i = 1; i <= CONFIG.totalTeams; i++) {
+                const opt = document.createElement('option');
+                opt.value = `Team ${i}`;
+                opt.textContent = `Team ${i}`;
+                teamSelect.appendChild(opt);
+            }
+        }
+
+        // 2. Render Checkpoint Setup Summary
+        function renderActiveZonesSummary() {
+            activeCountBadge.textContent = `${activeCheckpoints.length} Active`;
+            activeZonesList.innerHTML = "";
+            activeCheckpoints.forEach((cp, idx) => {
+                const div = document.createElement('div');
+                div.textContent = `🧬 [Scene ${idx + 1}] - ${cp.displayName}`;
+                activeZonesList.appendChild(div);
+            });
+        }
+
+        // 3. Load Progress from Storage
+        function loadProgress() {
+            const savedData = localStorage.getItem('school_forensics_save');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                // Fail-safe protection: if active array length changed from previous saves, reset gracefully
+                if(parsed.currentCheckpointIndex > activeCheckpoints.length) {
+                    handleGlobalReset();
+                } else {
+                    gameState = parsed;
+                }
+            }
+        }
+
+        // 4. Save Progress to Storage
+        function saveProgress() {
+            localStorage.setItem('school_forensics_save', JSON.stringify(gameState));
+        }
+
+        // 5. Update Game Display Information
+        function updateGameDisplay() {
+            if (gameState.isComplete || activeCheckpoints.length === 0) return;
+
+            displayTeamName.textContent = `UNIT: ${gameState.teamName}`;
+            
+            const currentNum = gameState.currentCheckpointIndex + 1;
+            const totalNum = activeCheckpoints.length;
+            displayProgress.textContent = `EVIDENCE: ${gameState.currentCheckpointIndex} / ${totalNum}`;
+            
+            const percentage = (gameState.currentCheckpointIndex / totalNum) * 100;
+            progressBar.style.width = `${percentage}%`;
+
+            const activeNode = activeCheckpoints[gameState.currentCheckpointIndex];
+            displayCurrentLocation.textContent = `Scanning Area...`;
+            clueText.textContent = activeNode.clue;
+        }
+
+        // 6. View Rendering Decision-maker
+        function renderActiveView() {
+            setupView.classList.add('hidden');
+            gameView.classList.add('hidden');
+            victoryView.classList.add('hidden');
+
+            if (activeCheckpoints.length === 0) {
+                alert("Attention Coordinator: No forensic locations are enabled in the code CONFIG. Turn some to 'true'.");
+                setupView.classList.remove('hidden');
+                return;
+            }
+
+            if (gameState.isComplete) {
+                victoryView.classList.remove('hidden');
+            } else if (gameState.teamName === "") {
+                setupView.classList.remove('hidden');
+            } else {
+                gameView.classList.remove('hidden');
+                updateGameDisplay();
+            }
+        }
+
+        // 7. Action: Start Game
+        startBtn.addEventListener('click', () => {
+            gameState.teamName = teamSelect.value;
+            gameState.currentCheckpointIndex = 0;
+            gameState.isComplete = false;
+            saveProgress();
+            renderActiveView();
+        });
+
+        // 8. Core Game Loop Progress Trigger
+        function advanceCheckpoint() {
+            const totalNum = activeCheckpoints.length;
+            gameState.currentCheckpointIndex++;
+
+            if (gameState.currentCheckpointIndex >= totalNum) {
+                gameState.isComplete = true;
+                gameState.currentCheckpointIndex = totalNum; // Upper limit safety
+            }
+            
+            saveProgress();
+            renderActiveView();
+        }
+
+        // 9. Manual Passcode Verification Action
+        submitPasscodeBtn.addEventListener('click', () => {
+            const entered = passcodeInput.value.trim().toUpperCase();
+            const currentSecret = activeCheckpoints[gameState.currentCheckpointIndex].secretPasscode;
+
+            if (entered === currentSecret) {
+                showFeedback("SPECIMEN SECURED. SECURE TRANSMISSION SUCCESSFUL.", "emerald");
+                passcodeInput.value = "";
+                setTimeout(() => {
+                    advanceCheckpoint();
+                }, 1500);
+            } else {
+                showFeedback("SPECIMEN ANALYSIS REJECTED. PASSCODE MISMATCH.", "rose");
+            }
+        });
+
+        // Helper dynamic feedback panel
+        function showFeedback(msg, color) {
+            feedbackDiv.textContent = msg;
+            feedbackDiv.className = ""; // clear
+            feedbackDiv.classList.add('text-xs', 'p-4', 'rounded-xl', 'mb-6', 'text-center', 'font-mono', 'border');
+            
+            if (color === "emerald") {
+                feedbackDiv.classList.add('bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+            } else {
+                feedbackDiv.classList.add('bg-rose-500/10', 'text-rose-400', 'border-rose-500/20');
+            }
+            feedbackDiv.classList.remove('hidden');
+
+            setTimeout(() => {
+                feedbackDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 10. QR Query String Logic (e.g. index.html?scan=chemistry_lab)
+        function checkUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const scannedParam = urlParams.get('scan');
+
+            if (scannedParam) {
+                if (gameState.teamName === "") {
+                    // Strip param if game hasn't started yet
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                }
+
+                const expectedScanId = activeCheckpoints[gameState.currentCheckpointIndex].scanId;
+
+                if (scannedParam === expectedScanId) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    alert(`BIO-SAMPLE SECURED! Team verification confirmed at ${activeCheckpoints[gameState.currentCheckpointIndex].displayName}.`);
+                    advanceCheckpoint();
+                } else {
+                    const matchedIdx = activeCheckpoints.findIndex(cp => cp.scanId === scannedParam);
+                    if (matchedIdx !== -1 && matchedIdx < gameState.currentCheckpointIndex) {
+                        alert("Specimen at this site already catalogued in laboratory systems.");
+                    } else {
+                        alert("INCORRECT COORDINATES: Your active profile is looking for a different evidence sequence.");
+                    }
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+        }
+
+        // Reset game profile
+        function handleGlobalReset() {
+            localStorage.removeItem('school_forensics_save');
+            gameState = {
+                teamName: "",
+                currentCheckpointIndex: 0,
+                isComplete: false
+            };
+            renderActiveView();
+        }
+
+        resetBtn.addEventListener('click', () => {
+            if(confirm("Confirm: Aborting case file will wipe this team's evidence progress. Proceed?")) {
+                handleGlobalReset();
+            }
+        });
+        
+        victoryResetBtn.addEventListener('click', handleGlobalReset);
+    </script>
+</body>
+</html>
+
+
+---
+
+## How to Customize and Coordinate with Your Colleague
+
+Inside the `<script>` tag at the bottom of the HTML code (under **`TEACHER CORNER`**), you will see the `checkpoints` array. 
+
+If your colleague decides to skip the **Covered Playground**, they only need to change this:
+
+```javascript
+{
+    enabled: false, // Changed from true to false!
+    scanId: "covered_playground",
+    secretPasscode: "TREAD",
+    displayName: "Covered Playground",
+    clue: "A mud-cast footprint print was spotted..."
+},
